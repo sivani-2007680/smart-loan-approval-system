@@ -378,7 +378,29 @@ else:
     st.success(f"🎉 You save ₹{abs(diff):,.2f}")
 
 # ---------------- VISUAL ----------------
-st.bar_chart({
-    "HDFC": [hdfc_total],
-    "Your Loan": [user_total]
+
+import pandas as pd
+
+st.markdown("### 📊 Detailed Comparison Graph")
+
+comparison_df = pd.DataFrame({
+    "Loan Type": ["HDFC", "Your Loan"],
+    "EMI": [hdfc_emi, user_emi],
+    "Total Payment": [hdfc_total, user_total]
 })
+
+st.bar_chart(comparison_df.set_index("Loan Type"))
+
+# ---------------- DIFFERENCE VISUAL ----------------
+
+st.markdown("### 💡 Savings / Extra Cost Breakdown")
+
+diff_emi = user_emi - hdfc_emi
+diff_total = user_total - hdfc_total
+
+diff_df = pd.DataFrame({
+    "Type": ["EMI Difference", "Total Difference"],
+    "Amount": [diff_emi, diff_total]
+})
+
+st.bar_chart(diff_df.set_index("Type"))
