@@ -275,3 +275,110 @@ if submitted:
     else:
 
         st.error("❌ Loan Rejected")
+
+
+        # ===================== LOAN COMPARISON TOOL (MANUAL INPUT FIXED) =====================
+
+st.markdown("---")
+st.subheader("💰 Loan Comparison Tool (HDFC vs Your Loan)")
+
+# ---------------- HDFC RATES ----------------
+hdfc_rates = {
+    "Short Term (1-2 yrs)": 6.25,
+    "Medium Term (2-5 yrs)": 6.45,
+    "Long Term (5-10 yrs)": 6.15
+}
+
+# ---------------- EMI FUNCTION ----------------
+def emi(P, r, years):
+    r = r / (12 * 100)
+    n = years * 12
+    if r == 0:
+        return P / n
+    return (P * r * (1 + r)**n) / ((1 + r)**n - 1)
+
+# ---------------- GET PRINCIPAL FROM ML FORM ----------------
+try:
+    principal = loan_amount
+except:
+    principal = 20000
+
+# ---------------- INPUT SECTION (NO + / - BUTTONS) ----------------
+
+col1, col2 = st.columns(2)
+
+with col1:
+    years_input = st.text_input(
+        "Loan Tenure (Years)",
+        value=str(st.session_state.get("years", 5))
+    )
+
+    hdfc_type = st.selectbox(
+        "HDFC Rate Type",
+        list(hdfc_rates.keys()),
+        index=1
+    )
+
+with col2:
+    custom_rate_input = st.text_input(
+        "Your Interest Rate (%)",
+        value=str(st.session_state.get("rate", 10.0))
+    )
+
+# ---------------- SAFE CONVERSION ----------------
+try:
+    years = float(years_input)
+except:
+    years = 5
+
+try:
+    custom_rate = float(custom_rate_input)
+except:
+    custom_rate = 10.0
+
+# ---------------- SAVE STATE ----------------
+st.session_state["years"] = years
+st.session_state["rate"] = custom_rate
+
+# ---------------- CALCULATIONS ----------------
+hdfc_rate = hdfc_rates[hdfc_type]
+
+hdfc_emi = emi(principal, hdfc_rate, years)
+user_emi = emi(principal, custom_rate, years)
+
+hdfc_total = hdfc_emi * years * 12
+user_total = user_emi * years * 12
+
+# ---------------- DISPLAY ----------------
+
+st.markdown("### 📊 Comparison Result")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("🏦 HDFC Bank")
+    st.write(f"Rate: {hdfc_rate}%")
+    st.metric("EMI", f"₹{hdfc_emi:,.2f}")
+    st.metric("Total Payment", f"₹{hdfc_total:,.2f}")
+
+with col2:
+    st.subheader("📊 Your Loan")
+    st.write(f"Rate: {custom_rate}%")
+    st.metric("EMI", f"₹{user_emi:,.2f}")
+    st.metric("Total Payment", f"₹{user_total:,.2f}")
+
+# ---------------- RESULT ----------------
+diff = user_total - hdfc_total
+
+st.markdown("---")
+
+if diff > 0:
+    st.error(f"❌ HDFC is cheaper by ₹{diff:,.2f}")
+else:
+    st.success(f"🎉 You save ₹{abs(diff):,.2f}")
+
+# ---------------- VISUAL ----------------
+st.bar_chart({
+    "HDFC": [hdfc_total],
+    "Your Loan": [user_total]
+})
